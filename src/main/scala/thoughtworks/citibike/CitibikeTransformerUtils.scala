@@ -17,24 +17,25 @@ object CitibikeTransformerUtils {
 
     def computeDistances(spark: SparkSession): DataFrame = {
 
-      val UDF: UserDefinedFunction = udf((startLat: Double, startLong: Double,
-                                              endLat: Double, endLong: Double) => {
+      val UDF: UserDefinedFunction = udf((startLat: Double, startLong: Double, endLat: Double, endLong: Double) => {
         val startLatRad = startLat * Pi / 180
         val endLatRad = endLat * Pi / 180
+        val startLongRad = startLong * Pi / 180
+        val endLongRad = endLong * Pi / 180
         val latDelta = endLatRad - startLatRad
-        val lonDelta = (endLong - startLong) * Pi / 180
+        val longDelta = endLongRad - startLongRad
 
         // refer to haversine formula
-        val a = sin(latDelta/2) * sin(latDelta/2) + cos(startLatRad) * cos(endLatRad) * sin(lonDelta/2) * sin(lonDelta/2)
+        val a = sin(latDelta/2) * sin(latDelta/2) + cos(startLatRad) * cos(endLatRad) * sin(longDelta/2) * sin(longDelta/2)
         val c = 2 * atan2(sqrt(a), sqrt(1-a))
         (EarthRadiusInM * c / MetersPerMile).formatted("%.2f").toDouble
       })
 
       dataSet.withColumn("distance",
-          UDF(col("start_station_latitude"),
-            col("start_station_longitude"),
-            col("end_station_latitude"),
-            col("end_station_longitude")))
+        UDF(col("start_station_latitude"),
+          col("start_station_longitude"),
+          col("end_station_latitude"),
+          col("end_station_longitude")))
     }
   }
 }
