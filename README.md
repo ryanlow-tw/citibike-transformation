@@ -17,7 +17,8 @@ Please make sure you have the following installed
 
 ## Running Data Apps
 * Package the project with
-``` 
+
+``` bash
 sbt package
 ``` 
 * Sample data is available in the src/test/resource/data directory
@@ -25,7 +26,7 @@ sbt package
 ### Wordcount
 This applications will count the occurrences of a word within a text file. By default this app will read from the words.txt file and write to the target folder.  Pass in the input source path and output path directory to the spark-submit command below if you wish to use different files. 
 
-```
+```bash
 spark-submit --class thoughtworks.wordcount.WordCount --master local target/scala-2.11/tw-pipeline_2.11-0.1.0-SNAPSHOT.jar
 ```
 
@@ -39,16 +40,38 @@ The application is run in two steps.
 
 
 * To ingest data from external source to datalake:
-```
-spark-submit --class thoughtworks.ingest.DailyDriver --master local target/scala-2.11/tw-pipeline_2.11-0.1.0-SNAPSHOT.jar $(INPUT_LOCATION) $(OUTPUT_LOCATION)
+```bash
+spark-submit --class thoughtworks.ingest.DailyDriver --master local target/scala-2.11/tw-pipeline_2.11-0.1.0-SNAPSHOT.jar ./src/test/resources/data/citibike.csv ./target/DailyDriverOutput/
 ```
 
 * To transform Citibike data:
-```
-spark-submit --class thoughtworks.citibike.CitibikeTransformer --master local target/scala-2.11/tw-pipeline_2.11-0.1.0-SNAPSHOT.jar $(INPUT_LOCATION) $(OUTPUT_LOCATION)
+```bash
+spark-submit --class thoughtworks.citibike.CitibikeTransformer --master local target/scala-2.11/tw-pipeline_2.11-0.1.0-SNAPSHOT.jar ./target/DailyDriverOutput/ ./target/CitibikeOutput
 ```
 
 Currently this application is a skeleton with ignored tests.  Please unignore the tests and build the Citibike transformation application.
 
 #### Tips
 - For distance calculation, consider using [**Harvesine formula**](https://en.wikipedia.org/wiki/Haversine_formula) as an option.  
+
+
+* To ingest from hdfs
+
+```bash
+spark-submit --class thoughtworks.ingest.DailyDriver \ 
+--master yarn \
+--deploy-mode client \ 
+target/scala-2.11/tw-pipeline_2.11-0.1.0-SNAPSHOT.jar \
+hdfs://localhost:9000/root/citibike.csv \
+hdfs://localhost:9000/output/citibike.parquet
+```
+
+* To transform Citibike data from hdfs
+
+```bash
+spark-submit --class thoughtworks.citibike.CitibikeTransformer \ --master yarn \ 
+--deploy-mode client \
+target/scala-2.11/tw-pipeline_2.11-0.1.0-SNAPSHOT.jar \
+hdfs://localhost:9000/output/citibike.parquet \
+hdfs://localhost:9000/output/citibikeTransformation.parquet
+```
